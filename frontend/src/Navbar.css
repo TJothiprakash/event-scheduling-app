@@ -1,0 +1,23 @@
+/* Navbar.css */
+.navbar {
+    display: flex;
+    justify-content: flex-end;
+    /* Aligns items to the right */
+    background-color: transparent;
+    padding: 10px 20px;
+}
+
+.navbar a {
+    margin-left: 20px;
+    text-decoration: none;
+    color: #007bff;
+    font-weight: bold;
+}
+
+.navbar a:hover {
+    color: #0056b3;
+}
+
+.navbar a:active {
+    color: #003f7f;
+}

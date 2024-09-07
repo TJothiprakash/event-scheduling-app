@@ -1,0 +1,16 @@
+/* TimeSelector.css */
+.time-selector {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.time-label {
+  margin-right: 15px;
+}
+
+.time-dropdown {
+  padding: 5px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}

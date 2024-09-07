@@ -12,20 +12,27 @@ exports.scheduleOneOnOneSession = async (req, res) => {
         // Fetch user's availability
         const userAvailability = await Availability.find({ userId });
 
-        // Check if the userAvailability is null or empty
+     /*   // Check if the userAvailability is null or empty
         if (!userAvailability || userAvailability.length === 0) {
+            console.log("inside one on one session");
+            
             return res.status(404).json({ msg: `No availability found for user with ID ${userId}.` });
-        }
+        }*/
 
         // Check if the user is available in the requested time slot
         const isAvailable = userAvailability.some(slot => {
+            console.log("inside oneonone session schedule fn");
+            
             // Ensure slot is defined properly and contains startTime and endTime
             return slot && slot.startTime && slot.endTime &&
                 adminSessionStartTime >= slot.startTime &&
                 adminSessionEndTime <= slot.endTime;
+
         });
 
         if (!isAvailable) {
+            console.log("slot tome is not available for the user "+userId);
+            
             return res.status(400).json({ msg: `User with ID ${userId} is not available during the requested time.` });
         }
 
@@ -52,6 +59,8 @@ exports.scheduleMultiParticipantSession = async (req, res) => {
     try {
         let unavailableUsers = [];
 
+        console.log("inside create multiparticipant session funtion");
+        
         // Loop through each userId and check their availability
         for (let userId of userIds) {
             const userAvailability = await Availability.find({ userId });
