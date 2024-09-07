@@ -1,0 +1,18 @@
+/* src/styles/Register.css */
+.card {
+    margin-top: 20px;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+}
+
+.form-control {
+    margin-bottom: 15px;
+    height: 45px;
+}
+
+button {
+    width: 50%;
+    /* Make the button wider */
+    padding: 10px;
+}

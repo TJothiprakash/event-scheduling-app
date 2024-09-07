@@ -61,10 +61,10 @@ exports.updateSession = async (req, res) => {
     );
 
     if (!updatedAvailability) {
-      return res.status(404).json({ msg: 'Session not found' });
+      return res.status(404).json({ msg: 'Available slot  not found' });
     }
 
-    res.status(200).json({ msg: 'Session updated successfully', updatedAvailability });
+    res.status(200).json({ msg: 'Availability updated successfully', updatedAvailability });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -80,10 +80,10 @@ exports.deleteSession = async (req, res) => {
     const deletedAvailability = await Availability.findByIdAndDelete(sessionId);
 
     if (!deletedAvailability) {
-      return res.status(404).json({ msg: 'Session not found' });
+      return res.status(404).json({ msg: 'Available slot not found' });
     }
 
-    res.status(200).json({ msg: 'Session deleted successfully' });
+    res.status(200).json({ msg: 'Availability booked slot deleted successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

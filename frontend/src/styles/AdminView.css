@@ -1,0 +1,72 @@
+.admin-view {
+  background-color: #f4f4f4;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.scheduling-section {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #ffffff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.scheduling-section h2 {
+  margin-bottom: 15px;
+}
+
+.time-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.time-selection label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+button {
+  margin-top: 10px;
+  padding: 10px 15px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+.availability-list {
+  margin-top: 20px;
+}
+
+.availability-list ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.availability-list li {
+  background-color: #e9ecef;
+  margin: 5px 0;
+  padding: 10px;
+  border-radius: 5px;
+}
+.selected-users-list {
+  list-style-type: none;
+  padding: 0;
+}
+
+.selected-user-item {
+  background-color: #e0f7fa; /* Light blue background */
+  padding: 10px;
+  margin: 5px 0;
+  border-radius: 5px;
+  font-weight: bold; /* Make the text bold */
+}

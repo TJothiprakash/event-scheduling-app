@@ -1,0 +1,44 @@
+.schedule {
+  padding: 20px;
+  text-align: center;
+}
+
+.availability-table-container {
+  margin: 20px 0;
+}
+
+.availability-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 auto;
+}
+
+.availability-table th, .availability-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+.availability-table th {
+  background-color: #f2f2f2;
+  text-align: left;
+}
+
+.schedule-form {
+  margin-top: 30px;
+}
+
+.schedule-form label {
+  display: block;
+  margin: 10px 0;
+}
+
+.calendar-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 20px 0;
+}
+
+.dropdown {
+  margin: 20px 0;
+}
