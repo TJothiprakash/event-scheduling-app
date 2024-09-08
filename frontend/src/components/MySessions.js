@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
-import "../styles/MySessions.css"; // Optional: Import your CSS file for styling
 
 const MySessions = () => {
-  const [sessionsData, setSessionsData] = useState([]);
+  const [sessionsData, setSessionsData] = useState([]); // Initialize as an empty array
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -31,7 +30,9 @@ const MySessions = () => {
 
         const data = await response.json();
         console.log("Fetched sessions data:", data);
-        setSessionsData(data);
+
+        // Check if data.sessions exists and is an array before setting the state
+        setSessionsData(Array.isArray(data.sessions) ? data.sessions : []);
       } catch (err) {
         console.error("Error fetching sessions data:", err);
         setError(err.message);
@@ -42,37 +43,31 @@ const MySessions = () => {
   }, []);
 
   return (
-    <div className="my-sessions">
-      <h2>My Sessions</h2>
-      <p>Here you can view all your sessions.</p>
-
-      {error && <p>Error: {error}</p>}
-
-      {sessionsData.length > 0 ? (
-        <table className="sessions-table">
-          <thead>
-            <tr>
-              <th>Session ID</th>
-              <th>Date</th>
-              <th>Start Time</th>
-              <th>End Time</th>
-              <th>Details</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sessionsData.map((session) => (
-              <tr key={session._id}>
-                <td>{session._id}</td>
-                <td>{new Date(session.date).toLocaleDateString()}</td>
-                <td>{session.startTime}</td>
-                <td>{session.endTime}</td>
-                <td>{session.details || "No details"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : (
+    <div>
+      <h1>My Sessions</h1>
+      {error && <div>Error: {error}</div>}
+      {sessionsData.length === 0 ? (
         <p>No sessions found.</p>
+      ) : (
+        <ul>
+          {sessionsData.map((session) => (
+            <li key={session.sessionId}>
+              <h2>Session ID: {session.sessionId}</h2>
+              <p>Start Time: {new Date(session.startTime).toLocaleString()}</p>
+              <p>End Time: {new Date(session.endTime).toLocaleString()}</p>
+              <p>Session Type: {session.sessionType}</p>
+              <h3>Participants:</h3>
+              <ul>
+                {session.participants.map((participant) => (
+                  <li key={participant.id}>
+                    {participant.name} ({participant.email}) -{" "}
+                    {participant.role}
+                  </li>
+                ))}
+              </ul>
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { Dropdown } from "react-bootstrap"; // Import Bootstrap Dropdown
-import "../styles/Schedule.css"; // Import your custom CSS
+import { Dropdown } from "react-bootstrap";
+import "../styles/Schedule.css";
 import TimeSelector from "./TimeSelector";
 
 const Schedule = ({
@@ -12,73 +12,96 @@ const Schedule = ({
   selectedDate,
   handleDateChange,
 }) => {
-  const [startTime, setStartTime] = useState(""); // State for start time
-  const [endTime, setEndTime] = useState(""); // State for end time
-  const [error, setError] = useState(""); // State for error messages
+  const [adminSessionStartTime, setAdminSessionStartTime] = useState("");
+  const [adminSessionEndTime, setAdminSessionEndTime] = useState("");
+  const [sessionAgenda, setSessionAgenda] = useState("");
+  const [sessionMessage, setSessionMessage] = useState("");
+  const [error, setError] = useState("");
 
-  // Get unique emails from availabilityData
   const uniqueUsers = Array.from(
     new Set(availabilityData.map((item) => item.userId.email))
   );
 
-  // Function to handle API call based on session type
- const handleScheduleSession = async () => {
-   if (!selectedUsers.length || !selectedDate || !startTime || !endTime) {
-     setError("Please fill in all fields.");
-     return;
-   }
+  const handleScheduleSession = async () => {
+    setError("");
+    if (
+      !selectedUsers.length ||
+      !selectedDate ||
+      !adminSessionStartTime ||
+      !adminSessionEndTime ||
+      !sessionAgenda ||
+      !sessionMessage
+    ) {
+      setError("Please fill in all fields.");
+      return;
+    }
 
-   const userIDs = availabilityData
-     .filter((item) => selectedUsers.includes(item.userId.email))
-     .map((item) => item.userId._id);
+    // Create an array of participant emails
+    const participantEmails = selectedUsers;
 
-   const sessionData = {
-     sessionType,
-     users: userIDs,
-     date: selectedDate,
-     day: new Date(selectedDate).toLocaleString("en-US", { weekday: "long" }),
-     startTime,
-     endTime,
-   };
+    // Debug logs to check input values
+    console.log("Start Time String:", adminSessionStartTime);
+    console.log("End Time String:", adminSessionEndTime);
 
-   try {
-     const token = localStorage.getItem("token");
-     const url =
-       sessionType === "one-on-one"
-         ? "http://localhost:5000/api/sessions/schedule"
-         : "http://localhost:5000/api/sessions/scheduleMultiParticipantSession";
+    // Append seconds to the time strings
+    const startTimeString = `${adminSessionStartTime}:00`;
+    const endTimeString = `${adminSessionEndTime}:00`;
 
-     console.log("Making API call to: ", url);
-     console.log("Session Data: ", sessionData);
+    // Create date objects using full date and time strings
+    const startTimeDate = new Date(`${selectedDate}T${startTimeString}`);
+    const endTimeDate = new Date(`${selectedDate}T${endTimeString}`);
 
-     const response = await fetch(url, {
-       method: "POST",
-       headers: {
-         "Content-Type": "application/json",
-         Authorization: `Bearer ${token}`,
-       },
-       body: JSON.stringify(sessionData),
-     });
+    // Create session data object
+    const sessionData = {
+      sessionType,
+      participants: participantEmails, // Use the array of emails
+      date: selectedDate,
+      day: new Date(selectedDate).toLocaleString("en-US", { weekday: "long" }),
+      adminSessionStartTime: startTimeDate.getTime(), // Convert to timestamp
+      adminSessionEndTime: endTimeDate.getTime(), // Convert to timestamp
+      sessionAgenda,
+      sessionMessage,
+    };
 
-     if (!response.ok) {
-       throw new Error(`Error: ${response.status} ${response.statusText}`);
-     }
+    // Log session data to debug
+    console.log("Session Data:", sessionData);
 
-     const result = await response.json();
-     console.log("Session scheduled successfully:", result);
-   } catch (err) {
-     console.error("API call failed: ", err);
-     setError(err.message);
-   }
- };
+    try {
+      const token = localStorage.getItem("token");
+      const url =
+        sessionType === "one-on-one"
+          ? "http://localhost:5000/api/sessions/schedule"
+          : "http://localhost:5000/api/sessions/scheduleMultiParticipantSession";
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(sessionData),
+      });
+
+      if (!response.ok) {
+        const errorDetails = await response.text(); // Get response text for more details
+        throw new Error(
+          `Error: ${response.status} ${response.statusText} - ${errorDetails}`
+        );
+      }
+
+      const result = await response.json();
+      console.log("Session scheduled successfully:", result);
+    } catch (err) {
+      console.error("API call failed: ", err);
+      setError(err.message);
+    }
+  };
 
   return (
     <div className="schedule">
       <h1>Scheduling a Session</h1>
 
       <div className="schedule-form">
-        <h2>Select Session Details</h2>
-
         <label>
           Session Type:
           <select
@@ -125,23 +148,41 @@ const Schedule = ({
           />
         </label>
 
-        {/* Time Selector for Start and End Time */}
         <TimeSelector
-          startTime={startTime}
-          setStartTime={setStartTime}
-          endTime={endTime}
-          setEndTime={setEndTime}
+          startTime={adminSessionStartTime}
+          setStartTime={setAdminSessionStartTime}
+          endTime={adminSessionEndTime}
+          setEndTime={setAdminSessionEndTime}
         />
+
+        <label className="agenda-label">
+          Session Agenda:
+          <input
+            type="text"
+            value={sessionAgenda}
+            onChange={(e) => setSessionAgenda(e.target.value)}
+            placeholder="Enter session agenda"
+            className="agenda-input"
+          />
+        </label>
+
+        <label className="message-label">
+          Session Message:
+          <textarea
+            value={sessionMessage}
+            onChange={(e) => setSessionMessage(e.target.value)}
+            placeholder="Enter session message"
+            className="message-input"
+          />
+        </label>
 
         {error && <p className="error-message">{error}</p>}
 
-        {/* Add a button to submit the scheduling */}
         <button className="schedule-button" onClick={handleScheduleSession}>
           Schedule Session
         </button>
       </div>
 
-      {/* Availability Table placed at the bottom */}
       <div className="availability-table-container">
         <h2>All User Available Slots</h2>
         <table className="availability-table">

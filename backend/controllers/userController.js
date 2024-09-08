@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { sendEmail } = require('../config/Mailer.js'); // Adjust the path as necessary
 
 // Register User
 const registerUser = async (req, res) => {
@@ -10,7 +11,7 @@ const registerUser = async (req, res) => {
     // Check if the user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ msg: 'User already exists' });
+      return res.status(400).json({ msg: "User already exists" });
     }
 
     // Hash password
@@ -26,15 +27,33 @@ const registerUser = async (req, res) => {
     });
 
     await newUser.save();
-    res.status(201).json({ msg: 'User registered successfully' });
+    console.log("New user registered and saved in DB");
+
+    // Prepare email details
+    const subject = "Welcome to Our Application";
+    const text = "Thank you for registering!";
+    const html = "<h1>Welcome!</h1><p>Thank you for registering!</p>";
+
+    // Send welcome email
+    try {
+      await sendEmail(email, subject, text, html); // Use the destructured email
+      res
+        .status(201)
+        .json({ message: "User registered successfully and email sent!" });
+    } catch (error) {
+      console.error("Error sending email:", error);
+      res
+        .status(201)
+        .json({ message: "User registered, but failed to send email." });
+    }
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: err.message + " mail error?" });
   }
 };
 
 // Login User
 const loginUser = async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password} = req.body;
 
   try {
     // Check if user exists
@@ -47,7 +66,7 @@ const loginUser = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ msg: 'Invalid email or password' });
-    }
+    } 
 
     // Generate JWT
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
