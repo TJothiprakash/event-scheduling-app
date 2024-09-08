@@ -1,6 +1,6 @@
 Session Schedule Management System
 Overview
-The Session Schedule Management System is a web-based application that helps users and administrators to schedule and manage sessions effectively. It provides user authentication, session scheduling, and admin features for better session management.
+The Session Schedule Management System is a web-based application that helps users and administrators to schedule and manage sessions effectively. It provides user authentication, session scheduling, and admin features for better session management
 
 Technologies Used
 Frontend:
