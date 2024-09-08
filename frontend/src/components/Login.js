@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import "../styles/Login.css";
+// Importing the CSS file
 
 const Login = () => {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
   const handleLogin = async (event) => {
     event.preventDefault();
@@ -33,8 +35,8 @@ const Login = () => {
       // Assuming data.user contains the relevant fields
       localStorage.setItem("role", data.user.role); // Accessing nested role
       localStorage.setItem("token", data.token); // Storing the token
-        console.log("token from backend "+data.token);
-        
+      console.log("token from backend " + data.token);
+
       const role = localStorage.getItem("role"); // Get role from localStorage
 
       if (role === "admin") {
@@ -52,7 +54,6 @@ const Login = () => {
       setLoading(false);
     }
   };
-
 
   return (
     <div className="login-container">

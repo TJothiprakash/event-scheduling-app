@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Schedule from "./Schedule";
-import "../styles/AdminView.css"; // Importing the CSS file
+import "../styles/AdminView.css";
 
 const AdminView = () => {
   const [availabilityData, setAvailabilityData] = useState([]);
   const [error, setError] = useState(null);
-  const [selectedUsers, setSelectedUsers] = useState([]); // To keep track of selected users
-  const [sessionType, setSessionType] = useState("one-on-one"); // Default session type
-  const [selectedDate, setSelectedDate] = useState(""); // Store the selected date
+  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [sessionType, setSessionType] = useState("one-on-one");
+  const [selectedDate, setSelectedDate] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchAvailabilityData = async () => {
@@ -16,6 +17,7 @@ const AdminView = () => {
 
       if (!token) {
         setError("No token found");
+        setLoading(false); // Set loading to false when token is not found
         return;
       }
 
@@ -36,8 +38,10 @@ const AdminView = () => {
 
         const data = await response.json();
         setAvailabilityData(data);
+        setLoading(false);
       } catch (err) {
         setError(err.message);
+        setLoading(false);
       }
     };
 
@@ -46,13 +50,13 @@ const AdminView = () => {
 
   const handleUserSelect = (email) => {
     if (sessionType === "one-on-one") {
-      setSelectedUsers([email]); // Only allow one user
+      setSelectedUsers([email]);
     } else {
       setSelectedUsers((prev) => {
         if (prev.includes(email)) {
-          return prev.filter((user) => user !== email); // Deselect user
+          return prev.filter((user) => user !== email);
         } else {
-          return [...prev, email]; // Select user
+          return [...prev, email];
         }
       });
     }
@@ -60,7 +64,7 @@ const AdminView = () => {
 
   const handleSessionTypeChange = (e) => {
     setSessionType(e.target.value);
-    setSelectedUsers([]); // Clear selected users when changing session type
+    setSelectedUsers([]);
   };
 
   const handleDateChange = (e) => {
@@ -77,9 +81,10 @@ const AdminView = () => {
       </ul>
 
       {error && <p>Error: {error}</p>}
-
-      <div className="scheduling-section">
-        {availabilityData.length > 0 ? (
+      {loading ? (
+        <p>Loading availability data...</p>
+      ) : (
+        <div className="scheduling-section">
           <Schedule
             availabilityData={availabilityData}
             selectedUsers={selectedUsers}
@@ -89,10 +94,8 @@ const AdminView = () => {
             selectedDate={selectedDate}
             handleDateChange={handleDateChange}
           />
-        ) : (
-          <p>Loading availability data...</p>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
