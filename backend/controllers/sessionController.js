@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken"); // Import JWT for token verification
 const Session = require("../models/Session"); // Import the Session model
 const User = require("../models/User"); // Import the User model
 const Availability = require("../models/Availability");
-
+const SessionParticipant = require("../models/SessionParticipant");
 
 // Function to schedule a one-on-one session
 const scheduleOneOnOneSession = async (req, res) => {
@@ -31,14 +31,9 @@ const scheduleOneOnOneSession = async (req, res) => {
       adminSessionEndTime,
       participants,
     } = req.body;
-    console.log("participants "+participants);
+    console.log("participants " + participants);
 
-    
-   
-    
-    
-
-   // Check if participant's email is provided
+    // Check if participant's email is provided
     if (!participants || !participants) {
       return res
         .status(400)
@@ -57,7 +52,7 @@ const scheduleOneOnOneSession = async (req, res) => {
 
     // Check the scheduled date of the session
     console.log(adminSessionStartTime);
-    
+
     const scheduledDate = new Date(adminSessionStartTime)
       .toISOString()
       .split("T")[0];
@@ -113,7 +108,6 @@ const scheduleOneOnOneSession = async (req, res) => {
     return res.status(500).json({ message: "Error scheduling session." });
   }
 };
-
 // Function to schedule a multi-participant session
 const scheduleMultiParticipantSession = async (req, res) => {
   try {
@@ -124,13 +118,23 @@ const scheduleMultiParticipantSession = async (req, res) => {
         .status(401)
         .json({ message: "Authorization token is required." });
     }
+    console.log("Inside multi-participant session function");
 
     // Verify the token to get the admin's ID
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const adminId = decoded.id;
+    console.log("Admin ID retrieved from the token: " + adminId);
 
     // Extract session details from the request body
-    const { title, description, start_time, end_time, participants } = req.body;
+    const {
+      title,
+      description,
+      adminSessionStartTime, // Should be a timestamp (Number)
+      adminSessionEndTime, // Should be a timestamp (Number)
+      participants,
+    } = req.body;
+
+    console.log("Participants: ", participants);
 
     // Validate that there are participants in the request
     if (!participants || participants.length === 0) {
@@ -141,45 +145,71 @@ const scheduleMultiParticipantSession = async (req, res) => {
 
     // Array to store unavailable participants
     const unavailableParticipants = [];
+    // Array to store participant data for the session
+    const participantData = [];
 
     // Loop through each participant to check their availability
     for (const participant of participants) {
-      // Find the participant's user document by email or username
+      console.log(
+        "Searching for participant with email: " + participant.trim()
+      );
+
+      // Find participant in the database
       const participantUser = await User.findOne({
-        $or: [{ email: participant.email }, { username: participant.username }],
+        email: participant.trim(), // Trim spaces
       });
 
       // Check if the participant exists in the database
       if (!participantUser) {
+        console.log(
+          "Participant not available in the database: " + participant
+        );
         unavailableParticipants.push(participant); // Add to unavailable if not found
         continue; // Skip to the next participant
       }
 
-      // Get the scheduled date from start_time
-      const scheduledDate = new Date(start_time).toISOString().split("T")[0];
+      // Get the scheduled date from adminSessionStartTime
+      const scheduledDate = new Date(adminSessionStartTime)
+        .toISOString()
+        .split("T")[0];
+      console.log("Scheduled Date: " + scheduledDate);
 
       // Filter the participant's availability for the scheduled date
-      const participantAvailability = participantUser.availability.filter(
-        (slot) => {
-          const slotDate = new Date(slot.startTime).toISOString().split("T")[0];
-          return slotDate === scheduledDate; // Only include slots for the scheduled date
-        }
-      );
+      const participantAvailability = await Availability.find({
+        userId: participantUser._id,
+        date: {
+          $eq: new Date(adminSessionStartTime).toISOString().split("T")[0],
+        },
+      });
+
+      console.log("Participant availability: ", participantAvailability);
 
       // Check if the participant is available for the scheduled time
       const isAvailable = participantAvailability.some((slot) => {
-        const slotStart = new Date(slot.startTime).getTime();
-        const slotEnd = new Date(slot.endTime).getTime();
+        // Compare timestamps
+        const slotStart = slot.startTime; // Timestamp
+        const slotEnd = slot.endTime; // Timestamp
+
         return (
-          (start_time >= slotStart && start_time < slotEnd) || // Start time overlaps with the slot
-          (end_time > slotStart && end_time <= slotEnd) || // End time overlaps with the slot
-          (start_time <= slotStart && end_time >= slotEnd) // Entire slot is within the session time
+          (adminSessionStartTime >= slotStart &&
+            adminSessionStartTime < slotEnd) || // Start time overlaps with the slot
+          (adminSessionEndTime > slotStart && adminSessionEndTime <= slotEnd) || // End time overlaps with the slot
+          (adminSessionStartTime <= slotStart && adminSessionEndTime >= slotEnd) // Entire slot is within the session time
         );
       });
 
       // If the participant is not available, add them to the unavailable list
       if (!isAvailable) {
+        console.log(
+          "Unavailable participant based on available slots: " + participant
+        );
         unavailableParticipants.push(participant); // Collect unavailable participants
+      } else {
+        // Store participant data for the session if they are available
+        participantData.push({
+          user_id: participantUser._id,
+          name: participantUser.username,
+        });
       }
     }
 
@@ -196,17 +226,18 @@ const scheduleMultiParticipantSession = async (req, res) => {
       admin_id: adminId,
       title,
       description,
-      start_time,
-      end_time,
-      participants: participants.map((participant) => ({
-        user_id: participantUser._id,
-        name: participantUser.username,
-      })),
+      adminSessionStartTime,
+      adminSessionEndTime,
+      participants: participantData, // Use stored participant data
     });
+      console.log("new session created successfully "+newSession);
+      
+
 
     // Save the new session to the database
     await newSession.save();
-
+        console.log("session scheduled successfully");
+        
     // Return success response with the created session
     return res.status(201).json({
       message: "Multi-participant session scheduled successfully.",
@@ -221,30 +252,56 @@ const scheduleMultiParticipantSession = async (req, res) => {
   }
 };
 
-
-// Function to show all sessions scheduled by the admin
+// Function to show user's sessions
 const showMySessions = async (req, res) => {
   try {
-    const token = req.headers.authorization?.split(" ")[1]; // Extract token
+    // Get the token from the Authorization header
+    const token = req.headers.authorization?.split(" ")[1];
     if (!token) {
-      return res
-        .status(401)
-        .json({ message: "Authorization token is required." });
+      return res.status(401).json({ message: "Authorization token is required." });
     }
-    const decoded = jwt.verify(token, process.env.JWT_SECRET); // Verify token
-    const adminId = decoded.id;
 
-    // Find sessions scheduled by the admin
-    const sessions = await Session.find({ admin_id: adminId });
+    // Verify the token to get the user's ID
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.id; // User ID from the token
 
-    // Return the list of sessions
-    return res.status(200).json({
-      message: "Sessions retrieved successfully.",
-      sessions,
-    });
+    console.log("User ID retrieved from the token: " + userId);
+
+    // Query the SessionParticipant collection to find all sessions the user is part of
+    const participantSessions = await SessionParticipant.find({ user_id: userId })
+      .populate('session_id'); // Populate session_id to get session details
+
+    // Extract session IDs from the participant sessions
+    const sessionIds = participantSessions.map(participant => participant.session_id._id);
+
+    // Query the Session collection to get the session details
+    const sessions = await Session.find({ _id: { $in: sessionIds } })
+      .populate({
+        path: 'admin_id',
+        select: 'username', // Get the admin's username
+      })
+      .populate({
+        path: 'participants.user_id',
+        select: 'username email', // Get the participant's username and email
+      });
+
+    // Format the response to include the required details
+    const formattedSessions = sessions.map(session => ({
+      sessionId: session._id,
+      adminUsername: session.admin_id.username,
+      participants: session.participants.map(participant => ({
+        username: participant.name,
+        email: participant.user_id.email, // Email of the participant
+      })),
+      date: new Date(session.adminSessionStartTime).toISOString().split('T')[0], // Format date
+      startTime: new Date(session.adminSessionStartTime).toLocaleTimeString(), // Format start time
+      endTime: new Date(session.adminSessionEndTime).toLocaleTimeString(), // Format end time
+    }));
+
+    return res.status(200).json({ sessions: formattedSessions });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "Error retrieving sessions." });
+    console.error("Error fetching sessions:", error);
+    return res.status(500).json({ message: "Server error while fetching sessions." });
   }
 };
 

@@ -8,9 +8,13 @@ const Register = () => {
     email: "",
     password: "",
     confirmPassword: "",
-    role: "User", // Default role is set to 'User'
+    role: "user", // Default role is set to 'User'
   });
 
+  const [message, setMessage] = useState(""); // For displaying success/error messages
+  const [isError, setIsError] = useState(false); // To differentiate between success and error
+
+  // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -19,17 +23,57 @@ const Register = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  // Handle form submission
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle register logic here
-    console.log(formData); // Example: Log the form data
-  };
 
-  const validatePasswordMatch = (e) => {
-    const confirmPassword = e.target;
-    confirmPassword.setCustomValidity(
-      confirmPassword.value !== formData.password ? "Passwords don't match" : ""
-    );
+    // Check if password and confirmPassword match
+    if (formData.password !== formData.confirmPassword) {
+      setMessage("Passwords do not match.");
+      setIsError(true);
+      return;
+    }
+
+    // Make the request to register the user
+    try {
+      const response = await fetch("http://localhost:5000/api/users/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: formData.username,
+          email: formData.email,
+          password: formData.password,
+          role: formData.role,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.status === 201) {
+        setMessage(
+          "Registration successful! Check your email for confirmation."
+        );
+        setIsError(false);
+
+        // Clear the form after successful registration
+        setFormData({
+          username: "",
+          email: "",
+          password: "",
+          confirmPassword: "",
+          role: "User",
+        });
+      } else {
+        setMessage(data.msg || "Registration failed.");
+        setIsError(true);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      setMessage("An error occurred during registration.");
+      setIsError(true);
+    }
   };
 
   return (
@@ -41,10 +85,22 @@ const Register = () => {
               <h3>Register</h3>
             </div>
             <div className="card-body">
+              {/* Display success/error message */}
+              {message && (
+                <div
+                  className={`alert ${
+                    isError ? "alert-danger" : "alert-success"
+                  }`}
+                  role="alert"
+                >
+                  {message}
+                </div>
+              )}
+
               <form onSubmit={handleSubmit}>
                 <div className="form-group">
                   <label htmlFor="username">
-                     <span className="text-danger">*</span>
+                    <span className="text-danger">*</span> Username
                   </label>
                   <input
                     type="text"
@@ -59,7 +115,7 @@ const Register = () => {
                 </div>
                 <div className="form-group">
                   <label htmlFor="email">
-                     <span className="text-danger">*</span>
+                    <span className="text-danger">*</span> Email
                   </label>
                   <input
                     type="email"
@@ -74,7 +130,7 @@ const Register = () => {
                 </div>
                 <div className="form-group">
                   <label htmlFor="password">
-                     <span className="text-danger">*</span>
+                    <span className="text-danger">*</span> Password
                   </label>
                   <input
                     type="password"
@@ -91,7 +147,7 @@ const Register = () => {
                 </div>
                 <div className="form-group">
                   <label htmlFor="confirmPassword">
-                     <span className="text-danger">*</span>
+                    <span className="text-danger">*</span> Confirm Password
                   </label>
                   <input
                     type="password"
@@ -101,15 +157,13 @@ const Register = () => {
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     placeholder="Confirm Password"
-                    onInput={validatePasswordMatch}
                     required
                   />
                 </div>
                 <div className="form-group">
                   <label htmlFor="role">
-                     <span className="text-danger">*</span>
+                    <span className="text-danger">*</span> Role
                   </label>
-
                   <select
                     className="form-control"
                     id="role"
@@ -118,8 +172,8 @@ const Register = () => {
                     onChange={handleChange}
                     required
                   >
-                    <option value="Admin">Admin</option>
-                    <option value="User">User</option>
+                    <option value="admin">Admin</option>
+                    <option value="user">User</option>
                   </select>
                 </div>
                 <div className="d-flex justify-content-center">

@@ -17,6 +17,7 @@ const Schedule = ({
   const [sessionAgenda, setSessionAgenda] = useState("");
   const [sessionMessage, setSessionMessage] = useState("");
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState(""); // New state for success message
 
   const uniqueUsers = Array.from(
     new Set(availabilityData.map((item) => item.userId.email))
@@ -24,6 +25,8 @@ const Schedule = ({
 
   const handleScheduleSession = async () => {
     setError("");
+    setSuccessMessage(""); // Clear previous success message
+
     if (
       !selectedUsers.length ||
       !selectedDate ||
@@ -91,6 +94,9 @@ const Schedule = ({
 
       const result = await response.json();
       console.log("Session scheduled successfully:", result);
+
+      // Set success message after successful session scheduling
+      setSuccessMessage("Session scheduled successfully!"); // Set the success message
     } catch (err) {
       console.error("API call failed: ", err);
       setError(err.message);
@@ -113,7 +119,6 @@ const Schedule = ({
             <option value="multi-participant">Multi-Participant</option>
           </select>
         </label>
-
         <h2>Select Users</h2>
         <Dropdown>
           <Dropdown.Toggle variant="success" id="dropdown-basic">
@@ -137,7 +142,6 @@ const Schedule = ({
             ))}
           </Dropdown.Menu>
         </Dropdown>
-
         <label className="date-label">
           Date:
           <input
@@ -147,14 +151,12 @@ const Schedule = ({
             className="date-input"
           />
         </label>
-
         <TimeSelector
           startTime={adminSessionStartTime}
           setStartTime={setAdminSessionStartTime}
           endTime={adminSessionEndTime}
           setEndTime={setAdminSessionEndTime}
         />
-
         <label className="agenda-label">
           Session Agenda:
           <input
@@ -165,7 +167,6 @@ const Schedule = ({
             className="agenda-input"
           />
         </label>
-
         <label className="message-label">
           Session Message:
           <textarea
@@ -175,9 +176,11 @@ const Schedule = ({
             className="message-input"
           />
         </label>
-
         {error && <p className="error-message">{error}</p>}
-
+        {successMessage && (
+          <p className="success-message">{successMessage}</p>
+        )}{" "}
+        {/* Display success message */}
         <button className="schedule-button" onClick={handleScheduleSession}>
           Schedule Session
         </button>

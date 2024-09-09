@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import { Table } from "react-bootstrap"; // Import Table from react-bootstrap
+import "bootstrap/dist/css/bootstrap.min.css"; // Import Bootstrap CSS
 
 const MySessions = () => {
   const [sessionsData, setSessionsData] = useState([]); // Initialize as an empty array
@@ -42,32 +44,64 @@ const MySessions = () => {
     fetchSessionsData();
   }, []);
 
+  // Function to format time to AM/PM
+  const formatTime = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
+  // Remove duplicates based on sessionId
+  const uniqueSessions = Array.from(
+    new Map(
+      sessionsData.map((session) => [session.sessionId, session])
+    ).values()
+  );
+
   return (
-    <div>
+    <div className="container">
       <h1>My Sessions</h1>
-      {error && <div>Error: {error}</div>}
-      {sessionsData.length === 0 ? (
+      {error && <div className="alert alert-danger">{error}</div>}
+      {uniqueSessions.length === 0 ? (
         <p>No sessions found.</p>
       ) : (
-        <ul>
-          {sessionsData.map((session) => (
-            <li key={session.sessionId}>
-              <h2>Session ID: {session.sessionId}</h2>
-              <p>Start Time: {new Date(session.startTime).toLocaleString()}</p>
-              <p>End Time: {new Date(session.endTime).toLocaleString()}</p>
-              <p>Session Type: {session.sessionType}</p>
-              <h3>Participants:</h3>
-              <ul>
-                {session.participants.map((participant) => (
-                  <li key={participant.id}>
-                    {participant.name} ({participant.email}) -{" "}
-                    {participant.role}
-                  </li>
-                ))}
-              </ul>
-            </li>
-          ))}
-        </ul>
+        <Table striped bordered hover>
+          <thead>
+            <tr>
+              <th>Session ID</th>
+              <th>Session Admin</th>
+              <th>Participant Name</th>
+              <th>Participant Email</th>
+              <th>Date</th>
+              <th>Start Time</th>
+              <th>End Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            {uniqueSessions.map((session) => (
+              <tr key={session.sessionId}>
+                <td>{session.sessionId}</td>
+                <td>{session.adminUsername}</td>
+                <td>
+                  {session.participants
+                    .map((participant) => participant.name)
+                    .join(", ")}
+                </td>
+                <td>
+                  {session.participants
+                    .map((participant) => participant.email)
+                    .join(", ")}
+                </td>
+                <td>{new Date(session.startTime).toLocaleDateString()}</td>
+                <td>{formatTime(session.startTime)}</td>
+                <td>{formatTime(session.endTime)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
       )}
     </div>
   );
